@@ -1,56 +1,101 @@
-import {
-  BoxGeometry,
-  DirectionalLight,
-  HemisphereLight,
-  Mesh,
-  MeshStandardMaterial,
-  PerspectiveCamera,
-  Scene,
-  WebGLRenderer
-} from 'three';
+import kaboom from 'kaboom';
+import 'kaboom/global';
 
-const scene = new Scene();
+export const createGame = (canvas: HTMLCanvasElement) => {
+	const FLOOR_HEIGHT = 48;
+	const JUMP_FORCE = 800;
+	const SPEED = 480;
 
-const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+	// initialize context
+	kaboom({ canvas });
 
-const geometry = new BoxGeometry();
+	// load assets
+	loadSprite('bean', 'sprites/bean.png');
 
-const material = new MeshStandardMaterial({
-	color: 0x00ff00,
-	metalness: 0.13
-});
+	scene('game', () => {
+		// define gravity
+		setGravity(1600);
 
-const cube = new Mesh(geometry, material);
-scene.add(cube);
+		// add a game object to screen
+		const player = add([
+			// list of components
+			sprite('bean'),
+			pos(80, 40),
+			area(),
+			body()
+		]);
 
-const directionalLight = new DirectionalLight(0x9090aa);
-directionalLight.position.set(-10, 10, -10).normalize();
-scene.add(directionalLight);
+		// floor
+		add([
+			rect(width(), FLOOR_HEIGHT),
+			outline(4),
+			pos(0, height()),
+			anchor('botleft'),
+			area(),
+			body({ isStatic: true }),
+			color(127, 200, 255)
+		]);
 
-const hemisphereLight = new HemisphereLight(0xffffff, 0x444444);
-hemisphereLight.position.set(1, 1, 1);
-scene.add(hemisphereLight);
+		function jump() {
+			if (player.isGrounded()) {
+				player.jump(JUMP_FORCE);
+			}
+		}
 
-let renderer:WebGLRenderer;
+		// jump when user press space
+		onKeyPress('space', jump);
+		onClick(jump);
 
-const animate = () => {
-	requestAnimationFrame(animate);
-	cube.rotation.x += 0.01;
-	cube.rotation.y += 0.01;
-	renderer.render(scene, camera);
+		function spawnTree() {
+			// add tree obj
+			add([
+				rect(48, rand(32, 96)),
+				area(),
+				outline(4),
+				pos(width(), height() - FLOOR_HEIGHT),
+				anchor('botleft'),
+				color(255, 180, 255),
+				move(LEFT, SPEED),
+				'tree'
+			]);
+
+			// wait a random amount of time to spawn next tree
+			wait(rand(0.5, 1.5), spawnTree);
+		}
+
+		// start spawning trees
+		spawnTree();
+
+		// lose if player collides with any game obj with tag "tree"
+		player.onCollide('tree', () => {
+			// go to "lose" scene and pass the score
+			go('lose', score);
+			burp();
+			addKaboom(player.pos);
+		});
+
+		// keep track of score
+		let score = 0;
+
+		const scoreLabel = add([text(score.toString()), pos(24, 24)]);
+
+		// increment score every frame
+		onUpdate(() => {
+			score++;
+			scoreLabel.text = score.toString();
+		});
+	});
+
+	scene('lose', (score) => {
+		add([sprite('bean'), pos(width() / 2, height() / 2 - 80), scale(2), anchor('center')]);
+
+		// display score
+		add([text(score), pos(width() / 2, height() / 2 + 80), scale(2), anchor('center')]);
+
+		// go back to game with space is pressed
+		onKeyPress('space', () => go('game'));
+		onClick(() => go('game'));
+	});
+
+	go('game');
 };
-
-const resize = () => {
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
-};
-
-export const createScene = (el:HTMLCanvasElement) => {
-	renderer = new WebGLRenderer({ antialias: true, canvas: el });
-	resize();
-	animate();
-};
-
-window.addEventListener('resize', resize);

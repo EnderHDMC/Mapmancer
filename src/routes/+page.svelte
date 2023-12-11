@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { createScene } from '$lib/scene';
+	import { createGame } from '$lib/scene';
 
-	let el:HTMLCanvasElement;
+	let game: HTMLCanvasElement;
 
 	onMount(() => {
-		createScene(el);
+		createGame(game);
 	});
 </script>
 
@@ -14,4 +14,13 @@
 	<meta name="description" content="Three.js example app built with Svelte" />
 </svelte:head>
 
-<canvas bind:this={el} />
+<div class="game-page">
+	<canvas bind:this={game} />
+</div>
+
+<style>
+	.game-page {
+		background-color: mediumturquoise;
+		height: 100vh;
+	}
+</style>
