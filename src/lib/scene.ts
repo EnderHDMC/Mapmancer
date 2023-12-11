@@ -2,89 +2,10 @@ import kaboom from 'kaboom';
 import 'kaboom/global';
 
 export const createGame = (canvas: HTMLCanvasElement) => {
-	const FLOOR_HEIGHT = 48;
-	const JUMP_FORCE = 800;
-	const SPEED = 480;
-
 	// initialize context
 	kaboom({ canvas });
 
-	// load assets
-	loadSprite('bean', 'sprites/bean.png');
-
-	scene('game', () => {
-		// define gravity
-		setGravity(1600);
-
-		// add a game object to screen
-		const player = add([
-			// list of components
-			sprite('bean'),
-			pos(80, 40),
-			area(),
-			body()
-		]);
-
-		// floor
-		add([
-			rect(width(), FLOOR_HEIGHT),
-			outline(4),
-			pos(0, height()),
-			anchor('botleft'),
-			area(),
-			body({ isStatic: true }),
-			color(127, 200, 255)
-		]);
-
-		function jump() {
-			if (player.isGrounded()) {
-				player.jump(JUMP_FORCE);
-			}
-		}
-
-		// jump when user press space
-		onKeyPress('space', jump);
-		onClick(jump);
-
-		function spawnTree() {
-			// add tree obj
-			add([
-				rect(48, rand(32, 96)),
-				area(),
-				outline(4),
-				pos(width(), height() - FLOOR_HEIGHT),
-				anchor('botleft'),
-				color(255, 180, 255),
-				move(LEFT, SPEED),
-				'tree'
-			]);
-
-			// wait a random amount of time to spawn next tree
-			wait(rand(0.5, 1.5), spawnTree);
-		}
-
-		// start spawning trees
-		spawnTree();
-
-		// lose if player collides with any game obj with tag "tree"
-		player.onCollide('tree', () => {
-			// go to "lose" scene and pass the score
-			go('lose', score);
-			burp();
-			addKaboom(player.pos);
-		});
-
-		// keep track of score
-		let score = 0;
-
-		const scoreLabel = add([text(score.toString()), pos(24, 24)]);
-
-		// increment score every frame
-		onUpdate(() => {
-			score++;
-			scoreLabel.text = score.toString();
-		});
-	});
+	scene('game', gameScene);
 
 	scene('lose', (score) => {
 		add([sprite('bean'), pos(width() / 2, height() / 2 - 80), scale(2), anchor('center')]);
@@ -99,3 +20,241 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 
 	go('game');
 };
+
+function gameScene(): void {
+	loadSpriteAtlas('/atlas/dungeon.png', '/atlas/dungeon.json');
+
+	// floor
+	addLevel(
+		[
+			'xxxxxxxxxx',
+			'          ',
+			'          ',
+			'          ',
+			'          ',
+			'          ',
+			'          ',
+			'          ',
+			'          ',
+			'          '
+		],
+		{
+			tileWidth: 16,
+			tileHeight: 16,
+			tiles: {
+				' ': () => [sprite('floor', { frame: ~~rand(0, 8) })]
+			}
+		}
+	);
+
+	// objects
+	const map = addLevel(
+		[
+			'tttttttttt',
+			'cwwwwwwwwd',
+			'l        r',
+			'l        r',
+			'l        r',
+			'l      $ r',
+			'l        r',
+			'l $      r',
+			'attttttttb',
+			'wwwwwwwwww'
+		],
+		{
+			tileWidth: 16,
+			tileHeight: 16,
+			tiles: {
+				$: () => [
+					sprite('chest'),
+					area(),
+					body({ isStatic: true }),
+					tile({ isObstacle: true }),
+					{ opened: false },
+					'chest'
+				],
+				a: () => [
+					sprite('wall_botleft'),
+					area({ shape: new Rect(vec2(0), 4, 16) }),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				b: () => [
+					sprite('wall_botright'),
+					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				c: () => [
+					sprite('wall_topleft'),
+					area(),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				d: () => [
+					sprite('wall_topright'),
+					area(),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				w: () => [sprite('wall'), area(), body({ isStatic: true }), tile({ isObstacle: true })],
+				t: () => [
+					sprite('wall_top'),
+					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				l: () => [
+					sprite('wall_left'),
+					area({ shape: new Rect(vec2(0), 4, 16) }),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				r: () => [
+					sprite('wall_right'),
+					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				]
+			}
+		}
+	);
+
+	const player = map.spawn(
+		[
+			sprite('hero', { anim: 'idle' }),
+			area({ shape: new Rect(vec2(0, 6), 12, 12) }),
+			body(),
+			anchor('center'),
+			tile({})
+		],
+		2,
+		2
+	);
+
+	const sword = player.add([pos(-4, 9), sprite('sword'), anchor('bot'), rotate(0), spin()]);
+
+	// TODO: z
+	map.spawn(
+		[
+			sprite('ogre'),
+			anchor('bot'),
+			area({ scale: 0.5 }),
+			body({ isStatic: true }),
+			tile({ isObstacle: true })
+		],
+		5,
+		4
+	);
+
+	function spin() {
+		let spinning = false;
+		return {
+			id: 'spin',
+			update() {
+				if (spinning) {
+					this.angle += 1200 * dt();
+					if (this.angle >= 360) {
+						this.angle = 0;
+						spinning = false;
+					}
+				}
+			},
+			spin() {
+				spinning = true;
+			}
+		};
+	}
+
+	function interact() {
+		let interacted = false;
+		for (const col of player.getCollisions()) {
+			const c = col.target;
+			if (c.is('chest')) {
+				if (c.opened) {
+					c.play('close');
+					c.opened = false;
+				} else {
+					c.play('open');
+					c.opened = true;
+				}
+				interacted = true;
+			}
+		}
+		if (!interacted) {
+			sword.spin();
+		}
+	}
+
+	onKeyPress('space', interact);
+
+	const SPEED = 120;
+
+	const dirs = {
+		left: LEFT,
+		right: RIGHT,
+		up: UP,
+		down: DOWN
+	};
+
+	player.onUpdate(() => {
+		camPos(player.pos);
+	});
+
+	player.onPhysicsResolve(() => {
+		// Set the viewport center to player.pos
+		camPos(player.pos);
+	});
+
+	onKeyDown('right', () => {
+		player.flipX = false;
+		sword.flipX = false;
+		player.move(SPEED, 0);
+		sword.pos = vec2(-4, 9);
+	});
+
+	onKeyDown('left', () => {
+		player.flipX = true;
+		sword.flipX = true;
+		player.move(-SPEED, 0);
+		sword.pos = vec2(4, 9);
+	});
+
+	onKeyDown('up', () => {
+		player.move(0, -SPEED);
+	});
+
+	onKeyDown('down', () => {
+		player.move(0, SPEED);
+	});
+
+	onGamepadButtonPress('south', interact);
+
+	onGamepadStick('left', (v) => {
+		if (v.x < 0) {
+			player.flipX = true;
+			sword.flipX = true;
+			sword.pos = vec2(4, 9);
+		} else if (v.x > 0) {
+			player.flipX = false;
+			sword.flipX = false;
+			sword.pos = vec2(-4, 9);
+		}
+		player.move(v.scale(SPEED));
+		if (v.isZero()) {
+			if (player.curAnim() !== 'idle') player.play('idle');
+		} else {
+			if (player.curAnim() !== 'run') player.play('run');
+		}
+	});
+	['left', 'right', 'up', 'down'].forEach((key) => {
+		onKeyPress(key, () => {
+			player.play('run');
+		});
+		onKeyRelease(key, () => {
+			if (!isKeyDown('left') && !isKeyDown('right') && !isKeyDown('up') && !isKeyDown('down')) {
+				player.play('idle');
+			}
+		});
+	});
+}
