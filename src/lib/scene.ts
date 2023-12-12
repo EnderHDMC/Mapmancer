@@ -1,3 +1,7 @@
+import { dev } from '$app/environment';
+import { base } from '$app/paths';
+console.log(`Base: ${base}`);
+
 import kaboom from 'kaboom';
 import type { Key, Asset, SpriteData, SpriteAnim } from 'kaboom';
 import type { Comp, PosComp, RotateComp, ZComp } from 'kaboom';
@@ -18,8 +22,9 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 };
 
 function loadResources() {
+	const base = !dev ? 'Mapmancer' : '';
 	// https://0x72.itch.io/dungeontileset-ii
-	resources.dungeon = loadSpriteAtlas('/atlas/dungeon.png', '/atlas/temp.json');
+	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/temp.json`);
 }
 
 export interface SpinComp extends Comp {
@@ -75,7 +80,7 @@ function thing(data: Record<string, SpriteData>) {
 
 		const entries = Object.entries(ad.anims);
 		if (entries.length) {
-			entries.forEach(([a, b]) => {
+			entries.forEach(([a, b]: [string, any]) => {
 				const frame = b.from;
 				const x = ad.frames[frame].x * scale;
 				const y = ad.frames[frame].y * scale;
