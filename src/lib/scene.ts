@@ -1,4 +1,4 @@
-import kaboom from 'kaboom';
+import kaboom, { type Comp, type Key, type RotateComp } from 'kaboom';
 import 'kaboom/global';
 
 export const createGame = (canvas: HTMLCanvasElement) => {
@@ -24,30 +24,28 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 function gameScene(): void {
 	loadSpriteAtlas('/atlas/dungeon.png', '/atlas/dungeon.json');
 
-	// floor
-	addLevel(
+	const floor = addLevel(
 		[
 			'xxxxxxxxxx',
-			'          ',
-			'          ',
-			'          ',
-			'          ',
-			'          ',
-			'          ',
-			'          ',
-			'          ',
-			'          '
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo',
+			'oooooooooo'
 		],
 		{
 			tileWidth: 16,
 			tileHeight: 16,
 			tiles: {
-				' ': () => [sprite('floor', { frame: ~~rand(0, 8) })]
+				o: () => [sprite('floor', { frame: ~~rand(0, 8) })]
 			}
 		}
 	);
 
-	// objects
 	const map = addLevel(
 		[
 			'tttttttttt',
@@ -189,14 +187,6 @@ function gameScene(): void {
 	onKeyPress('space', interact);
 
 	const SPEED = 120;
-
-	const dirs = {
-		left: LEFT,
-		right: RIGHT,
-		up: UP,
-		down: DOWN
-	};
-
 	player.onUpdate(() => {
 		camPos(player.pos);
 	});
@@ -247,7 +237,9 @@ function gameScene(): void {
 			if (player.curAnim() !== 'run') player.play('run');
 		}
 	});
-	['left', 'right', 'up', 'down'].forEach((key) => {
+
+	const keys: Key[] = ['left', 'right', 'up', 'down'];
+	keys.forEach((key: Key) => {
 		onKeyPress(key, () => {
 			player.play('run');
 		});
