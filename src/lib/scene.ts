@@ -1,17 +1,25 @@
-import kaboom, { type Comp, type Key, type PosComp, type RotateComp, type ZComp } from 'kaboom';
+import kaboom from 'kaboom';
+import type { Key, Asset, SpriteData, SpriteAnim } from 'kaboom';
+import type { Comp, PosComp, RotateComp, ZComp } from 'kaboom';
 import 'kaboom/global';
+
+type atlasType = Asset<Record<string, SpriteData>>;
+
+const resources: { dungeon?: atlasType } = { dungeon: undefined };
 
 export const createGame = (canvas: HTMLCanvasElement) => {
 	kaboom({ canvas });
 	loadResources();
 
 	scene('game', gameScene);
-	go('game');
+
+	scene('temp', () => atlasDebug(resources.dungeon!));
+	go('temp');
 };
 
 function loadResources() {
 	// https://0x72.itch.io/dungeontileset-ii
-	loadSpriteAtlas('/atlas/dungeon.png', '/atlas/temp.json');
+	resources.dungeon = loadSpriteAtlas('/atlas/dungeon.png', '/atlas/temp.json');
 }
 
 export interface SpinComp extends Comp {
@@ -50,6 +58,68 @@ function zAuto(z: number): ZComp {
 			this.z = Math.floor(this.pos.y);
 		}
 	};
+}
+
+function thing(data: Record<string, SpriteData>) {
+	// Get the entries in the sprite atlas
+	const atlasEntries = Object.keys(data);
+	const scale = 512 * 4;
+	camScale(2, 2);
+
+	// Iterate through the entries and render each one
+	atlasEntries.forEach((entry) => {
+		// Calculate the position for each sprite
+		const ad = data[entry];
+		// if (entry !== 'floor') return;
+		console.log(ad);
+
+		const entries = Object.entries(ad.anims);
+		if (entries.length) {
+			entries.forEach(([a, b]) => {
+				const frame = b.from;
+				const x = ad.frames[frame].x * scale;
+				const y = ad.frames[frame].y * scale;
+
+				const demo = add([sprite(entry), area(), pos(x, y)]);
+				demo.play(a, { loop: true });
+			});
+		} else {
+			ad.frames.forEach((qwe, frame) => {
+				const x = qwe.x * scale;
+				const y = qwe.y * scale;
+
+				add([sprite(entry, { frame }), area(), pos(x, y)]);
+			});
+		}
+	});
+
+	const player = add([
+		pos(512, 0) // position in world
+	]);
+	const SPEED = 480;
+	player.onUpdate(() => {
+		camPos(player.pos);
+	});
+
+	onKeyDown('right', () => {
+		player.move(SPEED, 0);
+	});
+
+	onKeyDown('left', () => {
+		player.move(-SPEED, 0);
+	});
+
+	onKeyDown('up', () => {
+		player.move(0, -SPEED);
+	});
+
+	onKeyDown('down', () => {
+		player.move(0, SPEED);
+	});
+}
+
+function atlasDebug(atlas: atlasType): void {
+	atlas.onLoad(thing);
 }
 
 function gameScene(): void {
@@ -168,7 +238,13 @@ function gameScene(): void {
 		2
 	);
 
-	const sword = player.add([pos(-4, 9), sprite('weapon_anime_sword'), anchor('bot'), rotate(0), spin()]);
+	const sword = player.add([
+		pos(-4, 9),
+		sprite('weapon_anime_sword'),
+		anchor('bot'),
+		rotate(0),
+		spin()
+	]);
 
 	// TODO: z
 	const monster = map.spawn(
@@ -183,7 +259,7 @@ function gameScene(): void {
 		5,
 		4
 	);
-	monster.play('idle')
+	monster.play('idle');
 
 	function interact() {
 		let interacted = false;

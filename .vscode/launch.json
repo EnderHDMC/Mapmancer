@@ -7,10 +7,10 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Launch Program",
+			"name": "ParseDungeonAtlas",
 			"skipFiles": ["<node_internals>/**"],
-			"program": "${file}",
-			"cwd": "${fileDirname}"
+			"program": "${workspaceFolder}/static/atlas/parse.js",
+			"cwd": "${workspaceFolder}/static/atlas"
 		}
 	]
 }
