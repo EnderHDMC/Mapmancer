@@ -21,6 +21,31 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 	go('game');
 };
 
+export interface SpinComp extends Comp {
+	spinning: boolean;
+	spin: () => void;
+}
+
+function spin(): SpinComp {
+	return {
+		id: 'spin',
+		spinning: false,
+		require: ['rotate'],
+		update(this: RotateComp & SpinComp) {
+			if (this.spinning) {
+				this.angle += 1200 * dt();
+				if (this.angle >= 360) {
+					this.angle = 0;
+					this.spinning = false;
+				}
+			}
+		},
+		spin() {
+			this.spinning = true;
+		}
+	};
+}
+
 function gameScene(): void {
 	loadSpriteAtlas('/atlas/dungeon.png', '/atlas/dungeon.json');
 
@@ -144,25 +169,6 @@ function gameScene(): void {
 		5,
 		4
 	);
-
-	function spin() {
-		let spinning = false;
-		return {
-			id: 'spin',
-			update() {
-				if (spinning) {
-					this.angle += 1200 * dt();
-					if (this.angle >= 360) {
-						this.angle = 0;
-						spinning = false;
-					}
-				}
-			},
-			spin() {
-				spinning = true;
-			}
-		};
-	}
 
 	function interact() {
 		let interacted = false;
