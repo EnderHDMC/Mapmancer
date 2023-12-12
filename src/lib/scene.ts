@@ -173,7 +173,7 @@ function gameScene(): void {
 	// TODO: z
 	const monster = map.spawn(
 		[
-			sprite('big_demon'),
+			sprite('ogre'),
 			anchor('bot'),
 			area({ scale: 0.5 }),
 			body({ isStatic: true }),

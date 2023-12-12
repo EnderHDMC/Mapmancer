@@ -14,6 +14,34 @@ const parsedData = {};
 const lineCount = lines.length;
 let lineIndex = 0;
 
+function setAnimationData(animationKey, animationData) {
+	switch (animationKey) {
+		case 'idle':
+			animationData.speed = 3;
+			animationData.loop = true;
+			break;
+		case 'run':
+			animationData.speed = 10;
+			animationData.loop = true;
+			break;
+		case 'open':
+			animationData.speed = 20;
+			animationData.loop = false;
+			break;
+		case 'close':
+			animationData.speed = 20;
+			animationData.loop = false;
+			break;
+		case 'hit':
+			animationData.speed = 20;
+			animationData.loop = false;
+			break;
+		default:
+			console.error(`Animation: ${animationKey}`);
+			break;
+	}
+}
+
 function PeekLine() {
 	const line = lines[lineIndex];
 	let [name, x, y, width, height] = line.trim().split(/\s+/);
@@ -72,6 +100,7 @@ function parseAnimationFull(read, data) {
 				animationData.to = animationData.from - (count % slicesX.size);
 				console.warn(`WARNING! ${read.name}`);
 			}
+			setAnimationData(animationKey, animationData);
 
 			count++;
 		}
@@ -108,6 +137,7 @@ function parseAnimationSimple(read, data) {
 			const animationData = animations[animationKey] || { from: count };
 			animationData.to = count;
 			animations[animationKey] = animationData;
+			setAnimationData(animationKey, animationData);
 
 			count++;
 		}
@@ -173,7 +203,7 @@ while (lineIndex < lineCount) {
 }
 
 // Convert the parsed data to JSON format
-const jsonData = JSON.stringify(parsedData, null, 2);
+const jsonData = JSON.stringify(parsedData, null, 0);
 
 // Log the JSON data
 // console.log(jsonData);
