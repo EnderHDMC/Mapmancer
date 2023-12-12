@@ -23,7 +23,7 @@
 	},
 	"ogre": {
 		"x": 16,
-		"y": 320,
+		"y": 336,
 		"width": 256,
 		"height": 32,
 		"sliceX": 8,
@@ -52,7 +52,7 @@
 	},
 	"chest": {
 		"x": 304,
-		"y": 304,
+		"y": 400,
 		"width": 48,
 		"height": 16,
 		"sliceX": 3,
@@ -73,7 +73,7 @@
 	},
 	"sword": {
 		"x": 322,
-		"y": 81,
+		"y": 65,
 		"width": 12,
 		"height": 30
 	},
@@ -103,7 +103,13 @@
 	},
 	"wall_topleft": {
 		"x": 32,
-		"y": 128,
+		"y": 136,
+		"width": 16,
+		"height": 16
+	},
+	"wall_topleft_": {
+		"x": 32,
+		"y": 120,
 		"width": 16,
 		"height": 16
 	},

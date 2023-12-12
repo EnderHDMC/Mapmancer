@@ -1,11 +1,18 @@
-import kaboom, { type Comp, type Key, type RotateComp } from 'kaboom';
+import kaboom, { type Comp, type Key, type PosComp, type RotateComp, type ZComp } from 'kaboom';
 import 'kaboom/global';
 
 export const createGame = (canvas: HTMLCanvasElement) => {
 	kaboom({ canvas });
+	loadResources();
+
 	scene('game', gameScene);
 	go('game');
 };
+
+function loadResources() {
+	// https://0x72.itch.io/dungeontileset-ii
+	loadSpriteAtlas('/atlas/dungeon.png', '/atlas/temp.json');
+}
 
 export interface SpinComp extends Comp {
 	spinning: boolean;
@@ -32,8 +39,21 @@ function spin(): SpinComp {
 	};
 }
 
+function zAuto(z: number): ZComp {
+	return {
+		id: 'z',
+		z: z,
+		inspect() {
+			return `${this.z}`;
+		},
+		update(this: ZComp & PosComp) {
+			this.z = Math.floor(this.pos.y);
+		}
+	};
+}
+
 function gameScene(): void {
-	loadSpriteAtlas('/atlas/dungeon.png', '/atlas/dungeon.json');
+	camScale(4, 4);
 
 	const floor = addLevel(
 		[
@@ -59,7 +79,7 @@ function gameScene(): void {
 
 	const map = addLevel(
 		[
-			'tttttttttt',
+			'qttttttttt',
 			'cwwwwwwwwd',
 			'l        r',
 			'l        r',
@@ -75,7 +95,7 @@ function gameScene(): void {
 			tileHeight: 16,
 			tiles: {
 				$: () => [
-					sprite('chest'),
+					sprite('chest_empty'),
 					area(),
 					body({ isStatic: true }),
 					tile({ isObstacle: true }),
@@ -83,32 +103,32 @@ function gameScene(): void {
 					'chest'
 				],
 				a: () => [
-					sprite('wall_botleft'),
+					sprite('wall_edge_bottom_left'),
 					area({ shape: new Rect(vec2(0), 4, 16) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
 				b: () => [
-					sprite('wall_botright'),
+					sprite('wall_edge_bottom_right'),
 					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
 				c: () => [
-					sprite('wall_topleft'),
+					sprite('wall_top_left'),
 					area(),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
 				d: () => [
-					sprite('wall_topright'),
+					sprite('wall_top_right'),
 					area(),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
-				w: () => [sprite('wall'), area(), body({ isStatic: true }), tile({ isObstacle: true })],
+				w: () => [sprite('wall_mid'), area(), body({ isStatic: true }), tile({ isObstacle: true })],
 				t: () => [
-					sprite('wall_top'),
+					sprite('wall_top_mid'),
 					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
@@ -124,6 +144,12 @@ function gameScene(): void {
 					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
+				],
+				q: () => [
+					sprite('wall_edge_top_left'),
+					area(),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
 				]
 			}
 		}
@@ -131,30 +157,33 @@ function gameScene(): void {
 
 	const player = map.spawn(
 		[
-			sprite('hero', { anim: 'idle' }),
+			sprite('wizzard_f', { anim: 'idle' }),
 			area({ shape: new Rect(vec2(0, 6), 12, 12) }),
 			body(),
 			anchor('center'),
-			tile({})
+			tile({}),
+			zAuto(0)
 		],
 		2,
 		2
 	);
 
-	const sword = player.add([pos(-4, 9), sprite('sword'), anchor('bot'), rotate(0), spin()]);
+	const sword = player.add([pos(-4, 9), sprite('weapon_anime_sword'), anchor('bot'), rotate(0), spin()]);
 
 	// TODO: z
-	map.spawn(
+	const monster = map.spawn(
 		[
-			sprite('ogre'),
+			sprite('big_demon'),
 			anchor('bot'),
 			area({ scale: 0.5 }),
 			body({ isStatic: true }),
-			tile({ isObstacle: true })
+			tile({ isObstacle: true }),
+			zAuto(0)
 		],
 		5,
 		4
 	);
+	monster.play('idle')
 
 	function interact() {
 		let interacted = false;
@@ -175,7 +204,6 @@ function gameScene(): void {
 			sword.spin();
 		}
 	}
-
 	onKeyPress('space', interact);
 
 	const SPEED = 120;
