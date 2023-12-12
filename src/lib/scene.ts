@@ -24,7 +24,7 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 function loadResources() {
 	const base = !dev ? 'Mapmancer' : '';
 	// https://0x72.itch.io/dungeontileset-ii
-	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/temp.json`);
+	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/dungeon.json`);
 }
 
 export interface SpinComp extends Comp {

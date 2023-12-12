@@ -1,14 +1,15 @@
 import { readFileSync, writeFileSync } from 'fs';
 
 // Read frame info from a file
-const frameInfoFilePath = 'dungeon.info'; // Replace with the actual file path
+const frameInfoFilePath = 'dungeon.info';
+const frameOutputPath = 'dungeon.json';
 const frameInfo = readFileSync(frameInfoFilePath, 'utf-8');
 
 // Split the frame info into lines
 const lines = frameInfo.trim().split('\n');
 
 // Create an empty object to store the parsed data
-const parsedData = {};
+const animationAtlas = {};
 
 // Iterate through each line and parse the data
 const lineCount = lines.length;
@@ -37,7 +38,7 @@ function setAnimationData(animationKey, animationData) {
 			animationData.loop = false;
 			break;
 		default:
-			console.error(`Animation: ${animationKey}`);
+			console.error(`Unhandled animation: ${animationKey}`);
 			break;
 	}
 }
@@ -198,14 +199,10 @@ while (lineIndex < lineCount) {
 	if (!handled) console.log(`DEFAULT: ${read.name}`);
 
 	// Add the sprite data to the parsed object
-	if (parsedData[read.name]) console.error(`Already there! ${read.name}`);
-	parsedData[read.name] = data;
+	if (animationAtlas[read.name]) console.error(`Already there! ${read.name}`);
+	animationAtlas[read.name] = data;
 }
 
 // Convert the parsed data to JSON format
-const jsonData = JSON.stringify(parsedData, null, 0);
-
-// Log the JSON data
-// console.log(jsonData);
-
-writeFileSync('temp.json', jsonData);
+const jsonData = JSON.stringify(animationAtlas, null, 0);
+writeFileSync(frameOutputPath, jsonData);
