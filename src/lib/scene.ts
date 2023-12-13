@@ -97,17 +97,8 @@ function atlasDebugScene(atlas: assetAtlas): void {
 	atlas.onLoad(atlasDebug);
 }
 
-function gameScene(): void {
-	camScale(4, 4);
-	setBackground(Color.GREEN);
-	usePostEffect('background');
-
-	const music = play('OtherworldlyFoe', {
-		loop: true
-	});
-	volume(0.5);
-	music.play();
-
+function generateMap() {
+	randSeed(0);
 	const floor = addLevel(
 		[
 			'xxxxxxxxxx',
@@ -214,7 +205,41 @@ function gameScene(): void {
 		}
 	);
 
-	const player = map.spawn(
+	return { floor, map };
+}
+
+function setDeadZone(a: Vec2) {
+	const DEADZONE = 0.25;
+
+	// If stick value is smaller than dead zone, give it a value of 0
+	// Math.abs() makes it work regardless of positive or negative value
+	const magnitude = a.len();
+	if (magnitude < 0.25) {
+		a.x = 0;
+		a.y = 0;
+	} else {
+		const b = a.unit().scale((magnitude - DEADZONE) / (1 - DEADZONE));
+		a.x = b.x;
+		a.y = b.y;
+	}
+
+	return magnitude >= DEADZONE;
+}
+
+function gameScene(): void {
+	camScale(4, 4);
+	setBackground(Color.GREEN);
+	usePostEffect('background');
+
+	const music = play('OtherworldlyFoe', {
+		loop: true
+	});
+	volume(0.5);
+	music.play();
+
+	const dungeon = generateMap();
+
+	const player = dungeon.map.spawn(
 		[
 			sprite('wizzard_f', { anim: 'idle' }),
 			area({ shape: new Rect(vec2(0, 6), 12, 12) }),
@@ -237,7 +262,7 @@ function gameScene(): void {
 	]);
 
 	// TODO: z
-	const monster = map.spawn(
+	const monster = dungeon.map.spawn(
 		[
 			sprite('ogre'),
 			anchor('bot'),
@@ -271,7 +296,6 @@ function gameScene(): void {
 			sword.spin();
 		}
 	}
-	onKeyPress('space', interact);
 
 	onUpdate(() => {
 		const gameTime = time();
@@ -289,62 +313,76 @@ function gameScene(): void {
 		camPos(player.pos);
 	});
 
-	onKeyDown('right', () => {
-		player.flipX = false;
-		sword.flipX = false;
-		player.move(SPEED, 0);
-		sword.pos = vec2(-4, 9);
-	});
-
-	onKeyDown('left', () => {
-		player.flipX = true;
-		sword.flipX = true;
-		player.move(-SPEED, 0);
-		sword.pos = vec2(4, 9);
-	});
-
-	onKeyDown('up', () => {
-		player.move(0, -SPEED);
-	});
-
-	onKeyDown('down', () => {
-		player.move(0, SPEED);
-	});
-
-	onGamepadButtonPress('south', interact);
-
-	onGamepadStick('left', (v) => {
-		if (v.x < 0) {
-			player.flipX = true;
-			sword.flipX = true;
-			sword.pos = vec2(4, 9);
-		} else if (v.x > 0) {
-			player.flipX = false;
-			sword.flipX = false;
-			sword.pos = vec2(-4, 9);
+	let currentControlScheme: 'keyboard' | 'gamepad' = 'keyboard';
+	function moveKeyboard(v: Vec2) {
+		currentControlScheme = 'keyboard';
+		movePlayer(v, false);
+	}
+	function releaseMove() {
+		currentControlScheme = 'keyboard';
+		if (!isKeyDown('left') && !isKeyDown('right') && !isKeyDown('up') && !isKeyDown('down')) {
+			const zeroVec2 = new Vec2(0, 0);
+			movePlayer(zeroVec2, false);
 		}
-		player.move(v.scale(SPEED));
-		if (v.isZero()) {
-			if (player.curAnim() !== 'idle') player.play('idle');
-		} else {
-			if (player.curAnim() !== 'run') player.play('run');
-		}
+	}
+
+	onKeyPress('space', () => {
+		currentControlScheme = 'keyboard';
+		interact();
 	});
+	onKeyDown('right', () => moveKeyboard(Vec2.RIGHT));
+	onKeyDown('left', () => moveKeyboard(Vec2.LEFT));
+	onKeyDown('up', () => moveKeyboard(Vec2.UP));
+	onKeyDown('down', () => moveKeyboard(Vec2.DOWN));
 
 	const keys: Key[] = ['left', 'right', 'up', 'down'];
-	keys.forEach((key: Key) => {
-		onKeyPress(key, () => {
-			player.play('run');
-		});
-		onKeyRelease(key, () => {
-			if (!isKeyDown('left') && !isKeyDown('right') && !isKeyDown('up') && !isKeyDown('down')) {
-				player.play('idle');
-			}
-		});
-	});
+	keys.forEach((key: Key) => onKeyRelease(key, releaseMove));
 
 	onKeyPress('f2', () => {
 		music.stop();
-		go("atlas_debug")
-	})
+		go('atlas_debug');
+	});
+
+	function movePlayer(v: Vec2, controller = false) {
+		const live = setDeadZone(v);
+
+		if (controller && live) currentControlScheme = 'gamepad';
+		if (controller && currentControlScheme !== 'gamepad') return;
+
+		if (live) {
+			if (v.x < 0) {
+				player.flipX = true;
+				sword.flipX = true;
+				sword.pos = vec2(4, 9);
+			} else if (v.x > 0) {
+				player.flipX = false;
+				sword.flipX = false;
+				sword.pos = vec2(-4, 9);
+			}
+			player.move(v.scale(SPEED));
+
+			if (player.curAnim() !== 'run') player.play('run');
+		} else {
+			if (player.curAnim() !== 'idle') player.play('idle');
+		}
+	}
+
+	onGamepadButtonPress((b) => {
+		console.log(b);
+		return b;
+	});
+
+	onGamepadButtonPress('south', () => {
+		currentControlScheme = 'gamepad';
+		interact();
+	});
+
+	onGamepadStick('left', (v) => movePlayer(v, true));
+
+	onGamepadConnect(() => {
+		console.log('Connected');
+	});
+	onGamepadDisconnect(() => {
+		console.log('Disconnected');
+	});
 }
