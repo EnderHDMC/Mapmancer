@@ -1,15 +1,16 @@
 import { base } from '$app/paths';
 
 import kaboom from 'kaboom';
-import type { Key, Asset, SpriteData, Shader } from 'kaboom';
+import type { Key, Asset, SpriteData, Shader, SoundData } from 'kaboom';
 import 'kaboom/global';
 
 import { spin, zAuto } from './components';
 
 type assetAtlas = Asset<Record<string, SpriteData>>;
 type shaderAsset = Asset<Shader>;
+type soundAsset = Asset<SoundData>;
 
-const resources: { dungeon?: assetAtlas; post?: shaderAsset } = {};
+const resources: { dungeon?: assetAtlas; post?: shaderAsset; music?: soundAsset } = {};
 
 export const createGame = (canvas: HTMLCanvasElement) => {
 	kaboom({ canvas });
@@ -26,6 +27,8 @@ function loadResources() {
 	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/dungeon.json`);
 
 	resources.post = loadShaderURL('background', undefined, `${base}/shaders/background.frag`);
+
+	resources.music = loadSound('OtherworldlyFoe', `${base}/sounds/OtherworldlyFoe.mp3`);
 }
 
 function atlasDebug(data: Record<string, SpriteData>) {
@@ -92,6 +95,12 @@ function gameScene(): void {
 	camScale(4, 4);
 	setBackground(Color.GREEN);
 	usePostEffect('background');
+
+	const music = play('OtherworldlyFoe', {
+		loop: true
+	});
+	volume(0.5);
+	music.play();
 
 	const floor = addLevel(
 		[
@@ -216,6 +225,7 @@ function gameScene(): void {
 		pos(-4, 9),
 		sprite('weapon_anime_sword'),
 		anchor('bot'),
+		area(),
 		rotate(0),
 		spin()
 	]);
@@ -228,7 +238,8 @@ function gameScene(): void {
 			area({ scale: 0.5 }),
 			body({ isStatic: true }),
 			tile({ isObstacle: true }),
-			zAuto()
+			zAuto(),
+			'monster'
 		],
 		5,
 		4
