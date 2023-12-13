@@ -1,10 +1,11 @@
 import { base } from '$app/paths';
 
 import kaboom from 'kaboom';
-import type { Key, Asset, SpriteData, Shader, SoundData } from 'kaboom';
+import type { Key, Asset, SpriteData, Shader, SoundData, GameObj } from 'kaboom';
 import 'kaboom/global';
 
 import { spin, zAuto } from './components';
+import type { SpinComp } from './components/spin';
 
 type assetAtlas = Asset<Record<string, SpriteData>>;
 type shaderAsset = Asset<Shader>;
@@ -261,7 +262,6 @@ function gameScene(): void {
 		spin()
 	]);
 
-	// TODO: z
 	const monster = dungeon.map.spawn(
 		[
 			sprite('ogre'),
@@ -276,6 +276,16 @@ function gameScene(): void {
 		4
 	);
 	monster.play('idle');
+
+	onCollide('spin', 'monster', (a, b) => {
+		const objA = a as GameObj<SpinComp>;
+		const objB = b as GameObj<any>;
+
+		if (objA.spinning) {
+			addKaboom(objB.pos, { scale: 0.1 });
+			objB.destroy();
+		}
+	});
 
 	function interact() {
 		let interacted = false;
