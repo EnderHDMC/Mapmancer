@@ -1,9 +1,10 @@
 import { base } from '$app/paths';
 
 import kaboom from 'kaboom';
-import type { Key, Asset, SpriteData, Shader, Anchor } from 'kaboom';
-import type { Comp, AnchorComp, SpriteComp, PosComp, RotateComp, ZComp } from 'kaboom';
+import type { Key, Asset, SpriteData, Shader } from 'kaboom';
 import 'kaboom/global';
+
+import { spin, zAuto } from './components';
 
 type assetAtlas = Asset<Record<string, SpriteData>>;
 type shaderAsset = Asset<Shader>;
@@ -25,74 +26,6 @@ function loadResources() {
 	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/dungeon.json`);
 
 	resources.post = loadShaderURL('background', undefined, `${base}/shaders/background.frag`);
-}
-
-export interface SpinComp extends Comp {
-	spinning: boolean;
-	spin: () => void;
-}
-
-function spin(): SpinComp {
-	return {
-		id: 'spin',
-		spinning: false,
-		require: ['rotate'],
-		update(this: RotateComp & SpinComp) {
-			if (this.spinning) {
-				this.angle += 1200 * dt();
-				if (this.angle >= 360) {
-					this.angle = 0;
-					this.spinning = false;
-				}
-			}
-		},
-		spin() {
-			this.spinning = true;
-		}
-	};
-}
-
-function anchorPt(orig: Anchor | Vec2): Vec2 {
-	switch (orig) {
-		case 'topleft':
-			return new Vec2(-1, -1);
-		case 'top':
-			return new Vec2(0, -1);
-		case 'topright':
-			return new Vec2(1, -1);
-		case 'left':
-			return new Vec2(-1, 0);
-		case 'center':
-			return new Vec2(0, 0);
-		case 'right':
-			return new Vec2(1, 0);
-		case 'botleft':
-			return new Vec2(-1, 1);
-		case 'bot':
-			return new Vec2(0, 1);
-		case 'botright':
-			return new Vec2(1, 1);
-		default:
-			return orig;
-	}
-}
-
-function zAuto(z: number): ZComp {
-	return {
-		id: 'z',
-		z: z,
-		require: ['pos', 'anchor', 'sprite'],
-		inspect() {
-			return `${this.z}`;
-		},
-		update(this: ZComp & PosComp & AnchorComp & SpriteComp) {
-			let anchor = anchorPt(this.anchor).add(1, 1);
-			const dim = new Vec2(this.width, this.height);
-			anchor = anchor.scale(dim.scale(-0.5));
-			const offset = dim.add(anchor);
-			this.z = Math.floor(this.pos.y + offset.y);
-		}
-	};
 }
 
 function atlasDebug(data: Record<string, SpriteData>) {
@@ -273,7 +206,7 @@ function gameScene(): void {
 			body(),
 			anchor('center'),
 			tile({}),
-			zAuto(0)
+			zAuto()
 		],
 		2,
 		2
@@ -295,7 +228,7 @@ function gameScene(): void {
 			area({ scale: 0.5 }),
 			body({ isStatic: true }),
 			tile({ isObstacle: true }),
-			zAuto(0)
+			zAuto()
 		],
 		5,
 		4
