@@ -85,6 +85,12 @@ function atlasDebug(data: Record<string, SpriteData>) {
 	onKeyDown('down', () => {
 		player.move(0, SPEED);
 	});
+
+	onUpdate(() => {
+		const gameTime = time();
+		resources.post?.data?.bind();
+		resources.post?.data?.send({ time: gameTime });
+	});
 }
 
 function atlasDebugScene(atlas: assetAtlas): void {
@@ -336,4 +342,9 @@ function gameScene(): void {
 			}
 		});
 	});
+
+	onKeyPress('f2', () => {
+		music.stop();
+		go("atlas_debug")
+	})
 }
