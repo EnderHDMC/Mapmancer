@@ -154,7 +154,7 @@ function gameScene(): void {
 
 	const map = addLevel(
 		[
-			'qttttttttt',
+			'qtttttttts',
 			'cwwwwwwwwd',
 			'l        r',
 			'l        r',
@@ -190,13 +190,13 @@ function gameScene(): void {
 					tile({ isObstacle: true })
 				],
 				c: () => [
-					sprite('wall_top_left'),
+					sprite('wall_edge_left'),
 					area(),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
 				d: () => [
-					sprite('wall_top_right'),
+					sprite('wall_edge_right'),
 					area(),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
@@ -209,20 +209,26 @@ function gameScene(): void {
 					tile({ isObstacle: true })
 				],
 				l: () => [
-					sprite('wall_left'),
+					sprite('wall_edge_mid_left'),
 					area({ shape: new Rect(vec2(0), 4, 16) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
 				r: () => [
-					sprite('wall_right'),
+					sprite('wall_edge_mid_right'),
 					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				],
 				q: () => [
 					sprite('wall_edge_top_left'),
-					area(),
+					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
+					body({ isStatic: true }),
+					tile({ isObstacle: true })
+				],
+				s: () => [
+					sprite('wall_edge_top_right'),
+					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
 					body({ isStatic: true }),
 					tile({ isObstacle: true })
 				]
