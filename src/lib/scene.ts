@@ -16,7 +16,7 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 
 	scene('game', gameScene);
 
-	scene('atlas_debug', () => atlasDebug(resources.dungeon!));
+	scene('atlas_debug', () => atlasDebugScene(resources.dungeon!));
 	go('game');
 };
 
@@ -95,7 +95,7 @@ function zAuto(z: number): ZComp {
 	};
 }
 
-function thing(data: Record<string, SpriteData>) {
+function atlasDebug(data: Record<string, SpriteData>) {
 	// Get the entries in the sprite atlas
 	const atlasEntries = Object.keys(data);
 	const scale = 512 * 4;
@@ -151,8 +151,8 @@ function thing(data: Record<string, SpriteData>) {
 	});
 }
 
-function atlasDebug(atlas: assetAtlas): void {
-	atlas.onLoad(thing);
+function atlasDebugScene(atlas: assetAtlas): void {
+	atlas.onLoad(atlasDebug);
 }
 
 function gameScene(): void {
