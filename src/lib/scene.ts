@@ -1,6 +1,4 @@
-import { dev } from '$app/environment';
 import { base } from '$app/paths';
-console.log(`Base: '${base}'`);
 
 import kaboom from 'kaboom';
 import type { Key, Asset, SpriteData, Shader } from 'kaboom';
@@ -19,13 +17,13 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 	scene('game', gameScene);
 
 	scene('atlas_debug', () => atlasDebug(resources.dungeon!));
-	go('atlas_debug');
+	go('game');
 };
 
 function loadResources() {
-	const base = !dev ? 'Mapmancer' : '';
 	// https://0x72.itch.io/dungeontileset-ii
 	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/dungeon.json`);
+
 	resources.post = loadShaderURL('background', undefined, `${base}/shaders/background.frag`);
 }
 
