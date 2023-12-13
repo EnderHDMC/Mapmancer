@@ -54,20 +54,15 @@ vec4 background(vec2 pos) {
     float yblend = smoothstep(0.5, 0.9, noise4);
     float wblend = smoothstep(0.7, 1.0, noise4);
 
-    vec3 r = vec3(0.0, 1.0, 0.0);
-    vec3 y = vec3(1.0, 1.0, 0.0);
-    vec3 w = vec3(1.0, 1.0, 1.0);
-
-    vec3 color = rblend * r + yblend * y + wblend * w;
-    color = vec3(noise2, noise4, noise3);
-
-    return vec4( color, 1.0 );
+    vec3 color = vec3(noise2, noise4, noise3);
+    return vec4(color, 1.0);
 }
 
 vec4 frag(vec2 pos, vec2 uv, vec4 color, sampler2D tex) {
     vec4 c = def_frag();
 
     float mask = float(c == vec4(0.0, 1.0, 0.0, 1.0));
+    pos = floor(pos * 256.0) / 256.0;
     c = mix(c, background(pos), mask);
     return c;
 }
