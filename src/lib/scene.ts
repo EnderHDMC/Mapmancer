@@ -3,13 +3,14 @@ import { base } from '$app/paths';
 console.log(`Base: ${base}`);
 
 import kaboom from 'kaboom';
-import type { Key, Asset, SpriteData, SpriteAnim } from 'kaboom';
+import type { Key, Asset, SpriteData, Shader } from 'kaboom';
 import type { Comp, PosComp, RotateComp, ZComp } from 'kaboom';
 import 'kaboom/global';
 
-type atlasType = Asset<Record<string, SpriteData>>;
+type assetAtlas = Asset<Record<string, SpriteData>>;
+type shaderAsset = Asset<Shader>;
 
-const resources: { dungeon?: atlasType } = { dungeon: undefined };
+const resources: { dungeon?: assetAtlas; post?: shaderAsset } = {};
 
 export const createGame = (canvas: HTMLCanvasElement) => {
 	kaboom({ canvas });
@@ -17,14 +18,15 @@ export const createGame = (canvas: HTMLCanvasElement) => {
 
 	scene('game', gameScene);
 
-	scene('temp', () => atlasDebug(resources.dungeon!));
-	go('temp');
+	scene('atlas_debug', () => atlasDebug(resources.dungeon!));
+	go('atlas_debug');
 };
 
 function loadResources() {
 	const base = !dev ? 'Mapmancer' : '';
 	// https://0x72.itch.io/dungeontileset-ii
 	resources.dungeon = loadSpriteAtlas(`${base}/atlas/dungeon.png`, `${base}/atlas/dungeon.json`);
+	resources.post = loadShaderURL('background', undefined, `${base}/shaders/background.frag`);
 }
 
 export interface SpinComp extends Comp {
@@ -123,12 +125,14 @@ function thing(data: Record<string, SpriteData>) {
 	});
 }
 
-function atlasDebug(atlas: atlasType): void {
+function atlasDebug(atlas: assetAtlas): void {
 	atlas.onLoad(thing);
 }
 
 function gameScene(): void {
 	camScale(4, 4);
+	setBackground(Color.GREEN);
+	usePostEffect('background');
 
 	const floor = addLevel(
 		[
@@ -286,6 +290,12 @@ function gameScene(): void {
 		}
 	}
 	onKeyPress('space', interact);
+
+	onUpdate(() => {
+		const gameTime = time();
+		resources.post?.data?.bind();
+		resources.post?.data?.send({ time: gameTime });
+	});
 
 	const SPEED = 120;
 	player.onUpdate(() => {
