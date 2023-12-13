@@ -1,8 +1,8 @@
 import { base } from '$app/paths';
 
 import kaboom from 'kaboom';
-import type { Key, Asset, SpriteData, Shader } from 'kaboom';
-import type { Comp, PosComp, RotateComp, ZComp } from 'kaboom';
+import type { Key, Asset, SpriteData, Shader, Anchor } from 'kaboom';
+import type { Comp, AnchorComp, SpriteComp, PosComp, RotateComp, ZComp } from 'kaboom';
 import 'kaboom/global';
 
 type assetAtlas = Asset<Record<string, SpriteData>>;
@@ -52,15 +52,45 @@ function spin(): SpinComp {
 	};
 }
 
+function anchorPt(orig: Anchor | Vec2): Vec2 {
+	switch (orig) {
+		case 'topleft':
+			return new Vec2(-1, -1);
+		case 'top':
+			return new Vec2(0, -1);
+		case 'topright':
+			return new Vec2(1, -1);
+		case 'left':
+			return new Vec2(-1, 0);
+		case 'center':
+			return new Vec2(0, 0);
+		case 'right':
+			return new Vec2(1, 0);
+		case 'botleft':
+			return new Vec2(-1, 1);
+		case 'bot':
+			return new Vec2(0, 1);
+		case 'botright':
+			return new Vec2(1, 1);
+		default:
+			return orig;
+	}
+}
+
 function zAuto(z: number): ZComp {
 	return {
 		id: 'z',
 		z: z,
+		require: ['pos', 'anchor', 'sprite'],
 		inspect() {
 			return `${this.z}`;
 		},
-		update(this: ZComp & PosComp) {
-			this.z = Math.floor(this.pos.y);
+		update(this: ZComp & PosComp & AnchorComp & SpriteComp) {
+			let anchor = anchorPt(this.anchor).add(1, 1);
+			const dim = new Vec2(this.width, this.height);
+			anchor = anchor.scale(dim.scale(-0.5));
+			const offset = dim.add(anchor);
+			this.z = Math.floor(this.pos.y + offset.y);
 		}
 	};
 }
