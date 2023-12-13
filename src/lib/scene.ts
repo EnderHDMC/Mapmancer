@@ -1,6 +1,6 @@
 import { dev } from '$app/environment';
 import { base } from '$app/paths';
-console.log(`Base: ${base}`);
+console.log(`Base: '${base}'`);
 
 import kaboom from 'kaboom';
 import type { Key, Asset, SpriteData, Shader } from 'kaboom';
@@ -77,8 +77,6 @@ function thing(data: Record<string, SpriteData>) {
 	atlasEntries.forEach((entry) => {
 		// Calculate the position for each sprite
 		const ad = data[entry];
-		// if (entry !== 'floor') return;
-		console.log(ad);
 
 		const entries = Object.entries(ad.anims);
 		if (entries.length) {
