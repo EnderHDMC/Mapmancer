@@ -174,6 +174,8 @@ function gameScene(): void {
 			objA.flipX = player.truePos.x < objA.pos.x;
 
 			if (objA.curAnim() !== 'run') objA.play('run');
+		} else {
+			if (objA.curAnim() !== 'idle') objA.play('idle');
 		}
 	});
 
@@ -225,7 +227,34 @@ function gameScene(): void {
 		}
 	}
 
+	const buffer = new Array(3).fill(0);
+	const hearts = buffer.map((a, i) =>
+		add([sprite('ui_heart'), pos(12 + (12 + 12 * 4) * i, 12), scale(4), fixed()])
+	);
+
+	const goldCoin = add([sprite('coin', { anim: 'base' }), pos(4, 12 + 12 * 4), scale(4), fixed()]);
+	const gold = add([text('0'), pos(12 + 8 * 4, 12 + 12 * 4), fixed()]);
+
+	function hpToHeart(health: number, index: number, slots: number) {
+		const hpToIndex = index * slots;
+		const deltaHp = health - hpToIndex;
+		const noHp = 2;
+		const fullHp = 0;
+
+		if (health <= hpToIndex) return noHp;
+		if (deltaHp >= slots) return fullHp;
+		return deltaHp;
+	}
+
+	let hp = 3;
 	onUpdate(() => {
+		gold.text = player.gold.toString();
+		hearts.forEach((h, i) => {
+			const qwe = hpToHeart(hp, i, 2);
+			console.info(0);
+			h.frame = qwe;
+		});
+
 		const gameTime = time();
 		resources.post?.data?.bind();
 		resources.post?.data?.send({ time: gameTime });
