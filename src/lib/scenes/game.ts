@@ -1,7 +1,37 @@
-import type { GameObjRaw, PosComp, SpriteComp, GameObj, Key } from 'kaboom';
-import { zAuto, spin, type SpinComp } from '$lib/components';
+import type { GameObjRaw, GameObj, Key, MergeComps } from 'kaboom';
+import type { Comp, AnchorComp, AreaComp, BodyComp, PosComp, SpriteComp } from 'kaboom';
+
+import { zAuto, spin, type SpinComp, type ZAutoComp } from '$lib/components';
 import { generateMap, cleanMap } from '$lib/map';
 import { resources } from '$lib/resources';
+
+type playerType = GameObjRaw &
+	MergeComps<SpriteComp | AreaComp | PosComp | AnchorComp | BodyComp | ZAutoComp | PlayerComp>;
+
+interface PlayerComp extends Comp {
+	alive: boolean;
+	health: number;
+	maxHealth: number;
+	gold: number;
+
+	damage: (hitpoints: number) => void;
+}
+
+function player(): PlayerComp {
+	const maxHealth = 6;
+	return {
+		id: 'player',
+		alive: true,
+		health: maxHealth,
+		gold: 0,
+		maxHealth,
+		damage(hitpoints: number) {
+			this.health -= hitpoints;
+			this.health = Math.max(this.health, 0);
+			this.alive = this.health > 0;
+		}
+	};
+}
 
 function setDeadZone(a: Vec2) {
 	const DEADZONE = 0.25;
@@ -48,20 +78,19 @@ function gameScene(): void {
 
 	let dungeon = generateMap(0);
 	const spawnPos = dungeon.map.tile2Pos(2, 2);
+
 	const playerList = [
 		sprite('wizard_f', { anim: 'idle' }),
 		area({ shape: new Rect(vec2(0, 6), 12, 12) }),
 		pos(spawnPos),
-		body(),
 		anchor('center'),
-		tile({}),
+		body(),
 		zAuto(),
-		'player',
-		{ alive: true, gold: 0 }
+		player()
 	];
-	const player = add(playerList);
+	const player1: playerType = add(playerList);
 
-	const sword = player.add([
+	const sword = player1.add([
 		pos(-4, 9),
 		sprite('weapon_anime_sword'),
 		anchor('bot'),
@@ -73,9 +102,9 @@ function gameScene(): void {
 	onUpdate('monster', (a) => {
 		const SPEED = 60;
 		const objA = a as GameObjRaw & PosComp & SpriteComp;
-		if (player.alive) {
-			objA.moveTo(player.truePos, SPEED);
-			objA.flipX = player.truePos.x < objA.pos.x;
+		if (player1.alive) {
+			objA.moveTo(player1.truePos, SPEED);
+			objA.flipX = player1.truePos.x < objA.pos.x;
 
 			if (objA.curAnim() !== 'run') objA.play('run');
 		} else {
@@ -84,9 +113,10 @@ function gameScene(): void {
 	});
 
 	onCollide('monster', 'player', (a, b) => {
-		// b.destroy();
-		b.play('hit');
-		addKaboom(b.pos, { scale: 0.1 });
+		const objPlayer = b as playerType;
+		objPlayer.damage(1);
+		objPlayer.play('hit');
+		addKaboom(objPlayer.pos, { scale: 0.1 });
 	});
 
 	onCollide('spin', 'monster', (a, b) => {
@@ -101,7 +131,7 @@ function gameScene(): void {
 
 	function interact() {
 		let interacted = false;
-		for (const col of player.getCollisions()) {
+		for (const col of player1.getCollisions()) {
 			const c = col.target as GameObj;
 			if (c.is('chest')) {
 				if (c.opened) {
@@ -111,7 +141,7 @@ function gameScene(): void {
 					} else {
 						c.use(sprite('chest_empty', { frame: 2 }));
 						c.full = false;
-						player.gold += 5;
+						player1.gold += 5;
 					}
 				} else {
 					c.play('open');
@@ -123,8 +153,8 @@ function gameScene(): void {
 			if (c.is('stairs')) {
 				cleanMap(dungeon);
 				dungeon = generateMap(1);
-				player.moveTo(spawnPos);
-				readd(player);
+				player1.moveTo(spawnPos);
+				readd(player1);
 			}
 		}
 		return interacted;
@@ -136,11 +166,17 @@ function gameScene(): void {
 
 	const buffer = new Array(3).fill(0);
 	const hearts = buffer.map((_, i) =>
-		add([sprite('ui_heart'), pos(12 + (12 + 12 * 4) * i, 12), scale(4), fixed()])
+		add([sprite('ui_heart'), pos(12 + (12 + 12 * 4) * i, 12), scale(4), fixed(), z(5000)])
 	);
 
-	const goldCoin = add([sprite('coin', { anim: 'base' }), pos(4, 12 + 12 * 4), scale(4), fixed()]);
-	const gold = add([text('0'), pos(12 + 8 * 4, 12 + 12 * 4), fixed()]);
+	const goldCoin = add([
+		sprite('coin', { anim: 'base' }),
+		pos(4, 12 + 12 * 4),
+		scale(4),
+		fixed(),
+		z(5000)
+	]);
+	const gold = add([text('0'), pos(12 + 8 * 4, 12 + 12 * 4), fixed(), z(5000)]);
 
 	function hpToHeart(health: number, index: number, slots: number) {
 		const hpToIndex = index * slots;
@@ -153,9 +189,10 @@ function gameScene(): void {
 		return deltaHp;
 	}
 
-	let hp = 6;
 	onUpdate(() => {
-		gold.text = player.gold.toString();
+		gold.text = player1.gold.toString();
+
+		const hp = player1.health;
 		hearts.forEach((h, i) => {
 			const fill = hpToHeart(hp, i, 2);
 			h.frame = fill;
@@ -167,13 +204,13 @@ function gameScene(): void {
 	});
 
 	const SPEED = 120;
-	player.onUpdate(() => {
-		camPos(player.pos);
+	player1.onUpdate(() => {
+		camPos(player1.pos);
 	});
 
-	player.onPhysicsResolve(() => {
+	player1.onPhysicsResolve(() => {
 		// Set the viewport center to player.pos
-		camPos(player.pos);
+		camPos(player1.pos);
 	});
 
 	let currentControlScheme: 'keyboard' | 'gamepad' = 'keyboard';
@@ -218,23 +255,23 @@ function gameScene(): void {
 
 		if (live) {
 			if (v.x < 0) {
-				player.flipX = true;
+				player1.flipX = true;
 				sword.flipX = true;
 				sword.pos = vec2(4, 9);
 				sword.winding = -1;
 			} else if (v.x > 0) {
-				player.flipX = false;
+				player1.flipX = false;
 				sword.flipX = false;
 				sword.pos = vec2(-4, 9);
 				sword.winding = 1;
 			}
-			player.move(v.scale(SPEED));
+			player1.move(v.scale(SPEED));
 
-			const anim = player.curAnim();
-			if (anim !== 'run') player.play('run');
+			const anim = player1.curAnim();
+			if (anim !== 'run') player1.play('run');
 		} else {
-			const anim = player.curAnim();
-			if (anim !== 'idle') player.play('idle');
+			const anim = player1.curAnim();
+			if (anim !== 'idle') player1.play('idle');
 		}
 	}
 
