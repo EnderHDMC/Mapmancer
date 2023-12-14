@@ -35,10 +35,11 @@ function loadResources() {
 }
 
 function atlasDebug(data: Record<string, SpriteData>) {
+	camScale(2, 2);
+
 	// Get the entries in the sprite atlas
 	const atlasEntries = Object.keys(data);
 	const scale = 512 * 4;
-	camScale(2, 2);
 
 	// Iterate through the entries and render each one
 	atlasEntries.forEach((entry) => {
@@ -142,11 +143,11 @@ function generateMap() {
 			tileHeight: 16,
 			tiles: {
 				$: () => [
-					sprite('chest_empty'),
+					sprite('chest_full'),
 					area(),
 					body({ isStatic: true }),
 					tile({ isObstacle: true }),
-					{ opened: false },
+					{ opened: false, full: true },
 					'chest'
 				],
 				a: () => [
@@ -305,11 +306,16 @@ function gameScene(): void {
 	function interact() {
 		let interacted = false;
 		for (const col of player.getCollisions()) {
-			const c = col.target;
+			const c = col.target as GameObj;
 			if (c.is('chest')) {
 				if (c.opened) {
-					c.play('close');
-					c.opened = false;
+					if (!c.full) {
+						c.play('close');
+						c.opened = false;
+					} else {
+						c.use(sprite('chest_empty', { frame: 2 }));
+						c.full = false;
+					}
 				} else {
 					c.play('open');
 					c.opened = true;
