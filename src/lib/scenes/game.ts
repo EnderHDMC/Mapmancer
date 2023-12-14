@@ -23,6 +23,8 @@ function setDeadZone(a: Vec2) {
 
 function gameScene(): void {
 	camScale(4, 4);
+	setBackground(Color.GREEN);
+	usePostEffect('background');
 
 	const music = play('OtherworldlyFoe', {
 		loop: true,
@@ -158,8 +160,6 @@ function gameScene(): void {
 			const fill = hpToHeart(hp, i, 2);
 			h.frame = fill;
 		});
-
-		drawCircle({ pos: new Vec2(0, 0), radius: 120, color: Color.GREEN, shader: 'background' });
 
 		const gameTime = time();
 		resources.post?.data?.bind();
