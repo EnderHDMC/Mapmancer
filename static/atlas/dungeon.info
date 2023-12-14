@@ -229,9 +229,9 @@ ogre_anim_run_f0 144 380 32 36
 ogre_anim_run_f1 176 380 32 36
 ogre_anim_run_f2 208 380 32 36
 ogre_anim_run_f3 240 380 32 36
-ui_heart_empty 321 370 13 12
-ui_heart_full 289 370 13 12
-ui_heart_half 305 370 13 12
+ui_heart_0 288 370 16 12
+ui_heart_1 304 370 16 12
+ui_heart_1 320 370 16 12
 doc_anim_idle_f0 368 345 16 23
 doc_anim_idle_f1 384 345 16 23
 doc_anim_idle_f2 400 345 16 23
