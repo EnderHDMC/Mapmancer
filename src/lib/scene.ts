@@ -6,6 +6,8 @@ import type { PosComp, SpriteComp } from 'kaboom';
 import type { Asset, SpriteData, Shader, SoundData } from 'kaboom';
 import 'kaboom/global';
 
+import { generateMap } from './map';
+
 import { spin, zAuto } from './components';
 import type { SpinComp } from './components/spin';
 
@@ -101,117 +103,6 @@ function atlasDebugScene(atlas: assetAtlas): void {
 	atlas.onLoad(atlasDebug);
 }
 
-function generateMap() {
-	randSeed(0);
-	const floor = addLevel(
-		[
-			'xxxxxxxxxx',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo',
-			'oooooooooo'
-		],
-		{
-			tileWidth: 16,
-			tileHeight: 16,
-			tiles: {
-				o: () => [sprite('floor', { frame: ~~rand(0, 8) })]
-			}
-		}
-	);
-
-	const map = addLevel(
-		[
-			'qtttttttts',
-			'cwwwwwwwwd',
-			'l        r',
-			'l        r',
-			'l        r',
-			'l      $ r',
-			'l        r',
-			'l $      r',
-			'attttttttb',
-			'wwwwwwwwww'
-		],
-		{
-			tileWidth: 16,
-			tileHeight: 16,
-			tiles: {
-				$: () => [
-					sprite('chest_full'),
-					area(),
-					body({ isStatic: true }),
-					tile({ isObstacle: true }),
-					{ opened: false, full: true },
-					'chest'
-				],
-				a: () => [
-					sprite('wall_edge_bottom_left'),
-					area({ shape: new Rect(vec2(0), 4, 16) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				b: () => [
-					sprite('wall_edge_bottom_right'),
-					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				c: () => [
-					sprite('wall_edge_left'),
-					area(),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				d: () => [
-					sprite('wall_edge_right'),
-					area(),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				w: () => [sprite('wall_mid'), area(), body({ isStatic: true }), tile({ isObstacle: true })],
-				t: () => [
-					sprite('wall_top_mid'),
-					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				l: () => [
-					sprite('wall_edge_mid_left'),
-					area({ shape: new Rect(vec2(0), 4, 16) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				r: () => [
-					sprite('wall_edge_mid_right'),
-					area({ shape: new Rect(vec2(12, 0), 4, 16) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				q: () => [
-					sprite('wall_edge_top_left'),
-					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				],
-				s: () => [
-					sprite('wall_edge_top_right'),
-					area({ shape: new Rect(vec2(0, 12), 16, 4) }),
-					body({ isStatic: true }),
-					tile({ isObstacle: true })
-				]
-			}
-		}
-	);
-
-	return { floor, map };
-}
-
 function setDeadZone(a: Vec2) {
 	const DEADZONE = 0.25;
 
@@ -242,7 +133,6 @@ function gameScene(): void {
 	music.play();
 
 	const dungeon = generateMap();
-
 	const player = dungeon.map.spawn(
 		[
 			sprite('wizard_f', { anim: 'idle' }),
@@ -266,21 +156,6 @@ function gameScene(): void {
 		rotate(0),
 		spin()
 	]);
-
-	const monster = dungeon.map.spawn(
-		[
-			sprite('ogre'),
-			anchor('bot'),
-			area({ scale: 0.5 }),
-			body({}),
-			tile({ isObstacle: true }),
-			zAuto(),
-			'monster'
-		],
-		5,
-		4
-	);
-	monster.play('idle');
 
 	onUpdate('monster', (a) => {
 		const SPEED = 60;
