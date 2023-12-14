@@ -242,7 +242,7 @@ function gameScene(): void {
 
 	const player = dungeon.map.spawn(
 		[
-			sprite('wizzard_f', { anim: 'idle' }),
+			sprite('wizard_f', { anim: 'idle' }),
 			area({ shape: new Rect(vec2(0, 6), 12, 12) }),
 			body(),
 			anchor('center'),
