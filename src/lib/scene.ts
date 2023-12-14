@@ -18,7 +18,7 @@ type soundAsset = Asset<SoundData>;
 const resources: { dungeon?: assetAtlas; post?: shaderAsset; music?: soundAsset } = {};
 
 export const createGame = (canvas: HTMLCanvasElement) => {
-	kaboom({ canvas });
+	kaboom({ canvas, focus: true });
 	loadResources();
 
 	scene('game', gameScene);

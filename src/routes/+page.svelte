@@ -6,7 +6,9 @@
 	let game: HTMLCanvasElement;
 
 	onMount(() => {
+		game.focus();
 		createGame(game);
+		game.focus();
 	});
 </script>
 
@@ -16,7 +18,8 @@
 </svelte:head>
 
 <div class="game-page">
-	<canvas bind:this={game} />
+	<!-- svelte-ignore a11y-autofocus -->
+	<canvas bind:this={game} autofocus />
 </div>
 
 <style>
