@@ -3,7 +3,6 @@ import { base } from '$app/paths';
 import kaboom from 'kaboom';
 import type { Key, GameObj, GameObjRaw } from 'kaboom';
 import type { PosComp, SpriteComp } from 'kaboom';
-import type { Asset, SpriteData, Shader, SoundData } from 'kaboom';
 import 'kaboom/global';
 
 import { cleanMap, generateMap } from './map';
@@ -11,11 +10,9 @@ import { cleanMap, generateMap } from './map';
 import { spin, zAuto } from './components';
 import type { SpinComp } from './components/spin';
 
-type assetAtlas = Asset<Record<string, SpriteData>>;
-type shaderAsset = Asset<Shader>;
-type soundAsset = Asset<SoundData>;
+import type { Atlas, atlasAsset, shaderAsset, soundAsset } from './types/assets';
 
-const resources: { dungeon?: assetAtlas; post?: shaderAsset; music?: soundAsset } = {};
+const resources: { dungeon?: atlasAsset; post?: shaderAsset; music?: soundAsset } = {};
 
 export const createGame = (canvas: HTMLCanvasElement) => {
 	kaboom({ canvas, focus: true });
@@ -36,7 +33,7 @@ function loadResources() {
 	resources.music = loadSound('OtherworldlyFoe', `${base}/sounds/OtherworldlyFoe.mp3`);
 }
 
-function atlasDebug(data: Record<string, SpriteData>) {
+function atlasDebug(data: Atlas) {
 	camScale(2, 2);
 
 	// Get the entries in the sprite atlas

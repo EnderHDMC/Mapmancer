@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { createGame } from '$lib/scene';
+	import { createGame } from '$lib/game';
 	import '$lib/disableF1';
 
 	let game: HTMLCanvasElement;
