@@ -6,7 +6,7 @@ import type { PosComp, SpriteComp } from 'kaboom';
 import type { Asset, SpriteData, Shader, SoundData } from 'kaboom';
 import 'kaboom/global';
 
-import { generateMap } from './map';
+import { cleanMap, generateMap } from './map';
 
 import { spin, zAuto } from './components';
 import type { SpinComp } from './components/spin';
@@ -132,21 +132,20 @@ function gameScene(): void {
 	volume(0.5);
 	music.play();
 
-	const dungeon = generateMap();
-	const player = dungeon.map.spawn(
-		[
-			sprite('wizard_f', { anim: 'idle' }),
-			area({ shape: new Rect(vec2(0, 6), 12, 12) }),
-			body(),
-			anchor('center'),
-			tile({}),
-			zAuto(),
-			'player',
-			{ alive: true, gold: 0 }
-		],
-		2,
-		2
-	);
+	let dungeon = generateMap();
+	const spawnPos = dungeon.map.tile2Pos(2, 2);
+	const playerList = [
+		sprite('wizard_f', { anim: 'idle' }),
+		area({ shape: new Rect(vec2(0, 6), 12, 12) }),
+		pos(spawnPos),
+		body(),
+		anchor('center'),
+		tile({}),
+		zAuto(),
+		'player',
+		{ alive: true, gold: 0 }
+	];
+	const player = add(playerList);
 
 	const sword = player.add([
 		pos(-4, 9),
@@ -196,12 +195,19 @@ function gameScene(): void {
 					} else {
 						c.use(sprite('chest_empty', { frame: 2 }));
 						c.full = false;
+						player.gold += 5;
 					}
 				} else {
 					c.play('open');
 					c.opened = true;
 				}
 				interacted = true;
+			}
+			if (c.is('stairs')) {
+				readd(player);
+				cleanMap(dungeon);
+				dungeon = generateMap();
+				player.moveTo(spawnPos);
 			}
 		}
 		if (!interacted) {
