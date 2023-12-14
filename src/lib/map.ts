@@ -222,8 +222,8 @@ function joinRooms(rooms: string[][][]) {
 	return map;
 }
 
-function generateMap() {
-	randSeed(0);
+function generateMap(seed: number) {
+	randSeed(seed);
 
 	const room1 = generateRoom(true, false, false, true, false);
 	const room2 = generateRoom(true, false, true, false, false);

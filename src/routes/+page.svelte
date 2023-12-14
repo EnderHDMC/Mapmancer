@@ -13,8 +13,8 @@
 </script>
 
 <svelte:head>
-	<title>Three.js Sveltekit</title>
-	<meta name="description" content="Three.js example app built with Svelte" />
+	<title>Dungeon Crawler</title>
+	<meta name="description" content="Kaboom app built with Svelte" />
 </svelte:head>
 
 <div class="game-page">

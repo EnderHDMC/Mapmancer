@@ -44,26 +44,25 @@ function atlasDebug(data: Record<string, SpriteData>) {
 	const scale = 512 * 4;
 
 	// Iterate through the entries and render each one
-	atlasEntries.forEach((entry) => {
-		// Calculate the position for each sprite
-		const ad = data[entry];
+	atlasEntries.forEach((name) => {
+		const animSet = data[name];
 
-		const entries = Object.entries(ad.anims);
+		const entries = Object.entries(animSet.anims);
 		if (entries.length) {
-			entries.forEach(([a, b]: [string, any]) => {
-				const frame = b.from;
-				const x = ad.frames[frame].x * scale;
-				const y = ad.frames[frame].y * scale;
+			entries.forEach(([anim, animData]: [string, any]) => {
+				const frame = animData.from;
+				const x = animSet.frames[frame].x * scale;
+				const y = animSet.frames[frame].y * scale;
 
-				const demo = add([sprite(entry), area(), pos(x, y)]);
-				demo.play(a, { loop: true });
+				const demo = add([sprite(name), area(), pos(x, y)]);
+				demo.play(anim, { loop: true });
 			});
 		} else {
-			ad.frames.forEach((qwe, frame) => {
-				const x = qwe.x * scale;
-				const y = qwe.y * scale;
+			animSet.frames.forEach((frame, index) => {
+				const x = frame.x * scale;
+				const y = frame.y * scale;
 
-				add([sprite(entry, { frame }), area(), pos(x, y)]);
+				add([sprite(name, { frame: index }), area(), pos(x, y)]);
 			});
 		}
 	});
@@ -76,21 +75,15 @@ function atlasDebug(data: Record<string, SpriteData>) {
 		camPos(player.pos);
 	});
 
-	onKeyDown('right', () => {
-		player.move(SPEED, 0);
-	});
-
-	onKeyDown('left', () => {
-		player.move(-SPEED, 0);
-	});
-
-	onKeyDown('up', () => {
-		player.move(0, -SPEED);
-	});
-
-	onKeyDown('down', () => {
-		player.move(0, SPEED);
-	});
+	function playerMove(v: Vec2) {
+		const mov = v.scale(SPEED);
+		player.move(mov);
+	}
+	onKeyDown('right', () => playerMove(RIGHT));
+	onKeyDown('left', () => playerMove(LEFT));
+	onKeyDown('up', () => playerMove(UP));
+	onKeyDown('down', () => playerMove(DOWN));
+	onKeyDown('f2', () => go('game'));
 
 	onUpdate(() => {
 		const gameTime = time();
@@ -123,13 +116,15 @@ function setDeadZone(a: Vec2) {
 
 function gameScene(): void {
 	camScale(4, 4);
-	setBackground(Color.GREEN);
-	usePostEffect('background');
 
 	const music = play('OtherworldlyFoe', {
 		loop: true,
 		volume: 0.5,
 		paused: true
+	});
+
+	onSceneLeave(() => {
+		music.stop();
 	});
 
 	// A hacky way to get audio working
@@ -142,7 +137,7 @@ function gameScene(): void {
 		}
 	});
 
-	let dungeon = generateMap();
+	let dungeon = generateMap(0);
 	const spawnPos = dungeon.map.tile2Pos(2, 2);
 	const playerList = [
 		sprite('wizard_f', { anim: 'idle' }),
@@ -180,8 +175,8 @@ function gameScene(): void {
 	});
 
 	onCollide('monster', 'player', (a, b) => {
-		b.alive = false;
-		b.destroy();
+		// b.destroy();
+		b.play('hit');
 		addKaboom(b.pos, { scale: 0.1 });
 	});
 
@@ -212,23 +207,26 @@ function gameScene(): void {
 				} else {
 					c.play('open');
 					c.opened = true;
+					interacted = true;
 				}
 				interacted = true;
 			}
 			if (c.is('stairs')) {
-				readd(player);
 				cleanMap(dungeon);
-				dungeon = generateMap();
+				dungeon = generateMap(1);
 				player.moveTo(spawnPos);
+				readd(player);
 			}
 		}
-		if (!interacted) {
-			sword.spin();
-		}
+		return interacted;
+	}
+
+	function attack() {
+		sword.spin();
 	}
 
 	const buffer = new Array(3).fill(0);
-	const hearts = buffer.map((a, i) =>
+	const hearts = buffer.map((_, i) =>
 		add([sprite('ui_heart'), pos(12 + (12 + 12 * 4) * i, 12), scale(4), fixed()])
 	);
 
@@ -246,14 +244,15 @@ function gameScene(): void {
 		return deltaHp;
 	}
 
-	let hp = 3;
+	let hp = 6;
 	onUpdate(() => {
 		gold.text = player.gold.toString();
 		hearts.forEach((h, i) => {
-			const qwe = hpToHeart(hp, i, 2);
-			console.info(0);
-			h.frame = qwe;
+			const fill = hpToHeart(hp, i, 2);
+			h.frame = fill;
 		});
+
+		drawCircle({ pos: new Vec2(0, 0), radius: 120, color: Color.GREEN, shader: 'background' });
 
 		const gameTime = time();
 		resources.post?.data?.bind();
@@ -283,10 +282,15 @@ function gameScene(): void {
 		}
 	}
 
-	onKeyPress('space', () => {
+	onKeyPress('z', () => {
 		currentControlScheme = 'keyboard';
 		interact();
 	});
+	onKeyPress('x', () => {
+		currentControlScheme = 'keyboard';
+		attack();
+	});
+
 	onKeyDown('right', () => moveKeyboard(Vec2.RIGHT));
 	onKeyDown('left', () => moveKeyboard(Vec2.LEFT));
 	onKeyDown('up', () => moveKeyboard(Vec2.UP));
@@ -295,8 +299,7 @@ function gameScene(): void {
 	const keys: Key[] = ['left', 'right', 'up', 'down'];
 	keys.forEach((key: Key) => onKeyRelease(key, releaseMove));
 
-	onKeyPress('f2', () => {
-		music.stop();
+	onKeyPress('f3', () => {
 		go('atlas_debug');
 	});
 
@@ -320,9 +323,11 @@ function gameScene(): void {
 			}
 			player.move(v.scale(SPEED));
 
-			if (player.curAnim() !== 'run') player.play('run');
+			const anim = player.curAnim();
+			if (anim !== 'run') player.play('run');
 		} else {
-			if (player.curAnim() !== 'idle') player.play('idle');
+			const anim = player.curAnim();
+			if (anim !== 'idle') player.play('idle');
 		}
 	}
 
@@ -334,6 +339,11 @@ function gameScene(): void {
 	onGamepadButtonPress('south', () => {
 		currentControlScheme = 'gamepad';
 		interact();
+	});
+
+	onGamepadButtonPress('west', () => {
+		currentControlScheme = 'gamepad';
+		attack();
 	});
 
 	onGamepadStick('left', (v) => movePlayer(v, true));

@@ -1,8 +1,12 @@
 // Function to handle keypress events
 function handleKeyPress(e: KeyboardEvent) {
-	// Check if the pressed key is F1 (key code 112)
 	if (e.code === 'F1') {
-		// Prevent the default behavior (opening Chrome Help page)
+		e.preventDefault();
+	}
+	if (e.code === 'F2') {
+		e.preventDefault();
+	}
+	if (e.code === 'F3') {
 		e.preventDefault();
 	}
 }
