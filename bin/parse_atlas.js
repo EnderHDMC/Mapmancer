@@ -15,30 +15,40 @@ const animationAtlas = {};
 const lineCount = lines.length;
 let lineIndex = 0;
 
-function setAnimationData(animationKey, animationData) {
-	switch (animationKey) {
+function setAnimationData(name, key, data) {
+	switch (key) {
 		case 'idle':
-			animationData.speed = 3;
-			animationData.loop = true;
+			data.speed = 3;
+			data.loop = true;
 			break;
 		case 'run':
-			animationData.speed = 10;
-			animationData.loop = true;
+			data.speed = 10;
+			data.loop = true;
 			break;
 		case 'open':
-			animationData.speed = 20;
-			animationData.loop = false;
+			data.speed = 20;
+			data.loop = false;
 			break;
 		case 'close':
-			animationData.speed = 20;
-			animationData.loop = false;
+			data.speed = 20;
+			data.loop = false;
 			break;
 		case 'hit':
-			animationData.speed = 20;
-			animationData.loop = false;
+			data.speed = 20;
+			data.loop = false;
+			break;
+		case 'base':
+			switch (name) {
+				case 'coin':
+					data.loop = true;
+					break;
+				default:
+					console.error(`Unhandled animation: ${name}[${key}]`);
+					break;
+			}
 			break;
 		default:
-			console.error(`Unhandled animation: ${animationKey}`);
+			console.error(`Unhandled animation: ${name}[${key}]`);
 			break;
 	}
 }
@@ -76,14 +86,14 @@ function processSlices(slicesX, slicesY, sliceX, sliceY, name) {
 }
 
 function parseAnimationFull(read, data) {
-	const animationPattern = '_anim_(\\w+)_f\\d+';
+	const animationPattern = '_anim_(\\w+)(_f\\d+)';
 	let animationMatch = read.name.match(animationPattern);
 
 	if (animationMatch) {
 		lineIndex--;
 		const animations = {};
 		let count = 0;
-		read.name = read.name.replace(animationMatch[0], '');
+		read.name = animationMatch.input.replace(animationMatch[0], '');
 
 		const slicesX = new Set();
 		const slicesY = new Set();
@@ -101,7 +111,11 @@ function parseAnimationFull(read, data) {
 				animationData.to = animationData.from - (count % slicesX.size);
 				console.warn(`WARNING! ${read.name}`);
 			}
-			setAnimationData(animationKey, animationData);
+
+			const nameWithKey = animationMatch.input.replace(animationMatch[2], '');
+			if (!SameName(nameWithKey)) {
+				setAnimationData(read.name, animationKey, animationData);
+			}
 
 			count++;
 		}
@@ -118,14 +132,14 @@ function parseAnimationFull(read, data) {
 }
 
 function parseAnimationSimple(read, data) {
-	const animationPattern = '(_anim)?_f\\d+';
+	const animationPattern = '(_anim)?(_f\\d+)';
 	let animationMatch = read.name.match(animationPattern);
 
 	if (animationMatch) {
 		lineIndex--;
 		const animations = {};
 		let count = 0;
-		read.name = read.name.replace(animationMatch[0], '');
+		read.name = animationMatch.input.replace(animationMatch[0], '');
 
 		const slicesX = new Set();
 		const slicesY = new Set();
@@ -138,7 +152,11 @@ function parseAnimationSimple(read, data) {
 			const animationData = animations[animationKey] || { from: count };
 			animationData.to = count;
 			animations[animationKey] = animationData;
-			setAnimationData(animationKey, animationData);
+
+			const nameWithKey = animationMatch.input.replace(animationMatch[2], '');
+			if (!SameName(nameWithKey)) {
+				setAnimationData(read.name, animationKey, animationData);
+			}
 
 			count++;
 		}
