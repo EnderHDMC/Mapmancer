@@ -53,3 +53,4 @@ function zAuto(): ZAutoComp {
 }
 
 export { zAuto };
+export type { ZAutoComp };
