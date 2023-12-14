@@ -364,10 +364,12 @@ function gameScene(): void {
 				player.flipX = true;
 				sword.flipX = true;
 				sword.pos = vec2(4, 9);
+				sword.winding = -1;
 			} else if (v.x > 0) {
 				player.flipX = false;
 				sword.flipX = false;
 				sword.pos = vec2(-4, 9);
+				sword.winding = 1;
 			}
 			player.move(v.scale(SPEED));
 
