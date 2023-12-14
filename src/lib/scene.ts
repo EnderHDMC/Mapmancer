@@ -127,10 +127,20 @@ function gameScene(): void {
 	usePostEffect('background');
 
 	const music = play('OtherworldlyFoe', {
-		loop: true
+		loop: true,
+		volume: 0.5,
+		paused: true
 	});
-	volume(0.5);
-	music.play();
+
+	// A hacky way to get audio working
+	// We play the music on interaction.
+	let startedAudio = false;
+	onKeyDown((a) => {
+		if (music.paused && !startedAudio) {
+			music.play();
+			startedAudio = true;
+		}
+	});
 
 	let dungeon = generateMap();
 	const spawnPos = dungeon.map.tile2Pos(2, 2);
