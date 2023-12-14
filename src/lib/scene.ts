@@ -1,7 +1,9 @@
 import { base } from '$app/paths';
 
 import kaboom from 'kaboom';
-import type { Key, Asset, SpriteData, Shader, SoundData, GameObj } from 'kaboom';
+import type { Key, GameObj } from 'kaboom';
+import type { PosComp } from 'kaboom';
+import type { Asset, SpriteData, Shader, SoundData } from 'kaboom';
 import 'kaboom/global';
 
 import { spin, zAuto } from './components';
@@ -247,7 +249,8 @@ function gameScene(): void {
 			body(),
 			anchor('center'),
 			tile({}),
-			zAuto()
+			zAuto(),
+			'player'
 		],
 		2,
 		2
@@ -267,7 +270,7 @@ function gameScene(): void {
 			sprite('ogre'),
 			anchor('bot'),
 			area({ scale: 0.5 }),
-			body({ isStatic: true }),
+			body({}),
 			tile({ isObstacle: true }),
 			zAuto(),
 			'monster'
@@ -276,6 +279,18 @@ function gameScene(): void {
 		4
 	);
 	monster.play('idle');
+
+	onUpdate('monster', (a) => {
+		const SPEED = 60;
+
+		const objA = a as GameObj<PosComp>;
+		objA.moveTo(player.truePos, SPEED);
+	});
+
+	onCollide('monster', 'player', (a, b) => {
+		b.destroy();
+		addKaboom(b.pos, { scale: 0.1 });
+	});
 
 	onCollide('spin', 'monster', (a, b) => {
 		const objA = a as GameObj<SpinComp>;

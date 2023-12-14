@@ -26,21 +26,28 @@ function anchorPt(orig: Anchor | Vec2): Vec2 {
 	}
 }
 
-function zAuto(): ZComp {
+interface ZAutoComp extends ZComp {
+	truePos: Vec2;
+}
+
+function zAuto(): ZAutoComp {
 	return {
 		id: 'z',
 		z: 0,
+		truePos: new Vec2(0, 0),
 		require: ['pos', 'anchor', 'sprite'],
 		inspect() {
 			return `${this.z}`;
 		},
-		update(this: ZComp & PosComp & AnchorComp & SpriteComp) {
+		update(this: ZAutoComp & PosComp & AnchorComp & SpriteComp) {
 			const dim = new Vec2(this.width, this.height);
 			let anchor = anchorPt(this.anchor).add(1, 1);
 			anchor = anchor.scale(dim.scale(0.5));
 
 			const offset = dim.sub(anchor);
-			this.z = Math.floor(this.pos.y + offset.y);
+			this.truePos.x = Math.floor(this.pos.x);
+			this.truePos.y = Math.floor(this.pos.y + offset.y);
+			this.z = this.truePos.y;
 		}
 	};
 }
