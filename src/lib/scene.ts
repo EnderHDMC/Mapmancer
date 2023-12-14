@@ -1,8 +1,8 @@
 import { base } from '$app/paths';
 
 import kaboom from 'kaboom';
-import type { Key, GameObj } from 'kaboom';
-import type { PosComp } from 'kaboom';
+import type { Key, GameObj, GameObjRaw } from 'kaboom';
+import type { PosComp, SpriteComp } from 'kaboom';
 import type { Asset, SpriteData, Shader, SoundData } from 'kaboom';
 import 'kaboom/global';
 
@@ -251,7 +251,8 @@ function gameScene(): void {
 			anchor('center'),
 			tile({}),
 			zAuto(),
-			'player'
+			'player',
+			{ alive: true, gold: 0 }
 		],
 		2,
 		2
@@ -283,12 +284,17 @@ function gameScene(): void {
 
 	onUpdate('monster', (a) => {
 		const SPEED = 60;
+		const objA = a as GameObjRaw & PosComp & SpriteComp;
+		if (player.alive) {
+			objA.moveTo(player.truePos, SPEED);
+			objA.flipX = player.truePos.x < objA.pos.x;
 
-		const objA = a as GameObj<PosComp>;
-		objA.moveTo(player.truePos, SPEED);
+			if (objA.curAnim() !== 'run') objA.play('run');
+		}
 	});
 
 	onCollide('monster', 'player', (a, b) => {
+		b.alive = false;
 		b.destroy();
 		addKaboom(b.pos, { scale: 0.1 });
 	});
