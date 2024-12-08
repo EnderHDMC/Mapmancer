@@ -250,9 +250,8 @@ function gameScene(): void {
 	onUpdate(() => {
 		gold.text = player.gold.toString();
 		hearts.forEach((h, i) => {
-			const qwe = hpToHeart(hp, i, 2);
-			console.info(0);
-			h.frame = qwe;
+			const fill = hpToHeart(hp, i, 2);
+			h.frame = fill;
 		});
 
 		const gameTime = time();
