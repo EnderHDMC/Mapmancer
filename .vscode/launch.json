@@ -11,6 +11,12 @@
 			"skipFiles": ["<node_internals>/**"],
 			"program": "${workspaceFolder}/bin/parse_atlas.js",
 			"cwd": "${workspaceFolder}/static/atlas"
+		},
+		{
+			"command": "pnpm dev",
+			"name": "Run dev",
+			"request": "launch",
+			"type": "node-terminal"
 		}
 	]
 }

@@ -235,6 +235,28 @@ function gameScene(): void {
 		attack();
 	});
 
+	let current = 0;
+	const costumes = [
+		'wizard_f',
+		'wizard_m',
+		'knight_f',
+		'knight_m',
+		'dwarf_f',
+		'dwarf_m',
+		'elf_f',
+		'elf_m',
+		'lizard_f',
+		'lizard_m'
+	];
+	onKeyPress('a', () => {
+		current = (current + 1) % costumes.length;
+		currentControlScheme = 'keyboard';
+		const anim = player1.curAnim();
+		const frame = player1.frame;
+		const flipX = player1.flipX;
+		player1.use(sprite(costumes[current], { anim, frame, flipX }));
+	});
+
 	onKeyDown('right', () => moveKeyboard(Vec2.RIGHT));
 	onKeyDown('left', () => moveKeyboard(Vec2.LEFT));
 	onKeyDown('up', () => moveKeyboard(Vec2.UP));
